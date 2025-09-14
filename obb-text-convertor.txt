@@ -1,0 +1,33 @@
+import glob, os
+
+# convert YOLO (xc,yc,w,h) to OBB with 4 corners (axis-aligned rectangle)
+def yolo_to_obb(xc, yc, w, h):
+    x1 = xc - w/2
+    y1 = yc - h/2
+    x2 = xc + w/2
+    y2 = yc - h/2
+    x3 = xc + w/2
+    y3 = yc + h/2
+    x4 = xc - w/2
+    y4 = yc + h/2
+    return x1,y1,x2,y2,x3,y3,x4,y4
+
+label_paths = glob.glob('//content/datasets/Gun-Knife-Stick-Detection-5/valid/labels/*.txt')
+for label_path in label_paths:
+    with open(label_path, 'r') as f:
+        lines = f.read().strip().splitlines()
+
+    new_lines = []
+    for line in lines:
+        parts = line.strip().split()
+        if len(parts) == 5:  # detect style
+            cls = int(parts[0])
+            xc,yc,w,h = map(float, parts[1:])
+            x1,y1,x2,y2,x3,y3,x4,y4 = yolo_to_obb(xc,yc,w,h)
+            new_lines.append(f"{cls} {x1} {y1} {x2} {y2} {x3} {y3} {x4} {y4}")
+        else:
+            # already OBB, just copy
+            new_lines.append(line)
+
+    with open(label_path, 'w') as f:
+        f.write('\n'.join(new_lines))
